@@ -2,19 +2,12 @@ class App {
 
   constructor(url) {
     this.server = 'http://parse.sfs.hackreactor.com/chatterbox/classes/messages';
-    this.rooms = ['lobby'];
+    this.rooms = [];
     this.storage = [];
     this.friends = [];
-    // this.username = window.location.search;
-    this.username = 'Ephraim and Rith';
   }
 
-  // createUsername() {
-  //   this.username = window.location.search;
-  // }
-
   init() {
-    //this.createUsername();
     $(document).ready(() => {
       this.fetch();
       $('#send').on('submit', e => {
@@ -27,6 +20,14 @@ class App {
         e.preventDefault();
         this.handleUsernameClick(e.target.textContent);
       });
+      $('#roomSelect').change(e => {
+        // empty the chats div
+        // iterate through all chats in storage
+        // compare room name of chat to selected roomname
+        // if match, render room
+        console.log('Selected a room!', $('#roomSelect').find('option:selected').text().replace(/\s\s+/g, ' '));
+      });
+
     });
   }
 
@@ -50,13 +51,23 @@ class App {
       url: this.server,
       type: 'GET',
       data: {
-        where: {username: "fredx"},
-        //order: -createdAt
+        //where: {username: "fredx"},
+        order: '-createdAt',
+        limit: 100
       },
       success: (data) => {
         this.storage = data.results;
+
         this.storage.forEach(message => this.renderMessage(message));
-        console.log('Success: ', data);
+
+        this.storage.forEach(message => {
+          if (this.rooms.indexOf(message.roomname) === -1) {
+            this.rooms.push(message.roomname);        
+          }
+          this.rooms.sort();
+        });
+        this.renderAllRooms();
+        // console.log('Success: ', JSON.stringify(data));
       },
       failure: (data) => {
         console.error(data);
@@ -66,13 +77,10 @@ class App {
 
   handleSubmit() {
     var post = {};
-    post.username = this.username;
-    // console.log(this.username);
-
-    // console.log('message val: ', $('#message').val());
-
+    var urlParams = new URLSearchParams(window.location.search);
+    post.username = urlParams.get('username');
     post.text = $('#message').val();
-    post.roomname = this.rooms[0];
+    post.roomname = $('#roomSelect').find('option:selected').text().replace(/\s\s+/g, ' ');
     console.log(JSON.stringify(post));
     this.send(JSON.stringify(post));
   }
@@ -83,7 +91,7 @@ class App {
     var date = message.createdAt;
     var $message = $(`<p><span class="username">${name}:</span><br>
                       ${text} <br> <span class="date">${date}</span></p>`);
-    $('#chats').prepend($message);
+    $('#chats').append($message);
   }
 
   clearMessages() {
@@ -96,12 +104,15 @@ class App {
   }
 
   renderRoom(roomName) {
-    var $room = $(`<option value=${roomName}>${roomName}</option>`);
+    var $room = $(`<option value=${roomName}>
+                      ${roomName}
+                  </option>`);
+    //var $room = $('<option value="lobby">lobby</option>');
     $('#roomSelect').prepend($room);
   }
 
   renderAllRooms() {
-    this.rooms.forEach(room => renderRoom(room));
+    this.rooms.forEach(room => this.renderRoom(room));
   }
 
   handleUsernameClick(name) {
