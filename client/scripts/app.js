@@ -9,17 +9,23 @@ class App {
 
   init() {
     $(document).ready(() => {
+
       this.fetch();
+
       $('#send').on('submit', e => {
         e.stopPropagation();
         e.preventDefault();
         (this.handleSubmit.bind(this))();
       });
+
       $(document).on('click', '.username', e => {
         e.stopPropagation();
         e.preventDefault();
         this.handleUsernameClick(e.target.textContent);
+        console.log(e.target.textContent);
+        
       });
+
       $('#roomSelect').change(e => {
         var selected = $('#roomSelect').find('option:selected').text().trim().replace(/\s\s+/g, ' ');
         if (selected === 'Add room') {
@@ -32,28 +38,13 @@ class App {
           this.rooms.sort();
           this.renderAllRooms();
           // select the new room!
-          $("#roomSelect").val(add);
-          console.log('rendered rooms');
-
-
+          $('#roomSelect').val(add);
+          //console.log('rendered rooms');
         } else {
-          // empty the chats div
-          this.clearMessages();
-          // iterate through all chats in storage
-          this.storage.forEach(message => {
-            // compare room name of chat to selected roomname
-            if (message.roomname === $('#roomSelect').find('option:selected').text().trim().replace(/\s\s+/g, ' ')) {
-              // if match, render room
-              this.renderMessage(message);
-            }
-          });
+          this.renderAllMessages();
           console.log('Selected a room!', $('#roomSelect').find('option:selected').text().trim().replace(/\s\s+/g, ' '));
-
         }
-
-
       });
-
     });
   }
 
@@ -123,11 +114,30 @@ class App {
     var text = DOMPurify.sanitize(message.text);
     var room = DOMPurify.sanitize(message.roomname);
     var date = message.createdAt;
-    var $message = $(`<span class="username">${name}:</span><br>
+    var status = this.friends.indexOf(message.username) > -1 ? ' friend' : '';
+    var $message = $(`<div class="chat">
+                      <span class="username${status}">${name}</span><br>
                       <p>${text}</p>
                       <span>in room: ${room}</span><br>
-                      <span class="date">${date}</span></p>`);
+                      <span class="date">${date}</span></p>
+                      </div>`);
     $('#chats').append($message);
+    // if (this.friends.indexOf(name) !== -1) {
+    //   $('.chat .username').textContent()
+    // }
+  }
+
+  renderAllMessages() {
+    // empty the chats div
+    this.clearMessages();
+    // iterate through all chats in storage
+    this.storage.forEach(message => {
+      // compare room name of chat to selected roomname
+      if (message.roomname === $('#roomSelect').find('option:selected').text().trim().replace(/\s\s+/g, ' ')) {
+        // if match, render room
+        this.renderMessage(message);
+      }
+    });
   }
 
   clearMessages() {
@@ -152,7 +162,12 @@ class App {
   }
 
   handleUsernameClick(name) {
-    this.friends.push(name);
+    //addClass to user being clicked
+    if (this.friends.indexOf(name) === -1) {
+      this.friends.push(name);
+      $('.chat .username').addClass('friend');
+      this.renderAllMessages();
+    } 
   }
 
 
@@ -160,5 +175,5 @@ class App {
 
 var app = new App();
 app.init();
-//setInterval(function() {  app.fetch(); }, 30000);
+//setInterval(function() {  app.fetch(); }, 3000);
 
