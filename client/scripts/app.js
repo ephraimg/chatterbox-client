@@ -3,7 +3,7 @@ class App {
   constructor(url) {
     this.server = 'http://parse.sfs.hackreactor.com/chatterbox/classes/messages';
     this.rooms = [];
-    this.storage = [];
+    this.storage = ['All'];
     this.friends = [];
   }
 
@@ -22,10 +22,19 @@ class App {
       });
       $('#roomSelect').change(e => {
         // empty the chats div
+        this.clearMessages();
         // iterate through all chats in storage
-        // compare room name of chat to selected roomname
-        // if match, render room
-        console.log('Selected a room!', $('#roomSelect').find('option:selected').text().replace(/\s\s+/g, ' '));
+        this.storage.forEach(message => {
+          // compare room name of chat to selected roomname
+          //console.log(message.roomname);
+          console.log(JSON.stringify(message));
+          console.log($('#roomSelect').find('option:selected').text().trim().replace(/\s\s+/g, ' '));
+          if (message.roomname === $('#roomSelect').find('option:selected').text().trim().replace(/\s\s+/g, ' ')) {
+            // if match, render room
+            this.renderMessage(message);
+          }
+        });
+        console.log('Selected a room!', $('#roomSelect').find('option:selected').text().trim().replace(/\s\s+/g, ' '));
       });
 
     });
@@ -51,9 +60,13 @@ class App {
       url: this.server,
       type: 'GET',
       data: {
-        //where: {username: "fredx"},
+        // where: {
+        //   'username': {
+        //     '$ne': undefined
+        //   }
+        // },
         order: '-createdAt',
-        limit: 100
+        limit: 1000
       },
       success: (data) => {
         this.storage = data.results;
@@ -80,14 +93,14 @@ class App {
     var urlParams = new URLSearchParams(window.location.search);
     post.username = urlParams.get('username');
     post.text = $('#message').val();
-    post.roomname = $('#roomSelect').find('option:selected').text().replace(/\s\s+/g, ' ');
+    post.roomname = $('#roomSelect').find('option:selected').text().trim().replace(/\s\s+/g, ' ');
     console.log(JSON.stringify(post));
     this.send(JSON.stringify(post));
   }
 
   renderMessage(message) {
-    var name = message.username;
-    var text = message.text;
+    var name = DOMPurify.sanitize(message.username);
+    var text = DOMPurify.sanitize(message.text);
     var date = message.createdAt;
     var $message = $(`<p><span class="username">${name}:</span><br>
                       ${text} <br> <span class="date">${date}</span></p>`);
@@ -104,8 +117,8 @@ class App {
   }
 
   renderRoom(roomName) {
-    var $room = $(`<option value=${roomName}>
-                      ${roomName}
+    var $room = $(`<option value=${DOMPurify.sanitize(roomName)}>
+                      ${DOMPurify.sanitize(roomName)}
                   </option>`);
     //var $room = $('<option value="lobby">lobby</option>');
     $('#roomSelect').prepend($room);
