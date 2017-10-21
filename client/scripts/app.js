@@ -3,7 +3,7 @@ class App {
   constructor(url) {
     this.server = 'http://parse.sfs.hackreactor.com/chatterbox/classes/messages';
     this.rooms = [];
-    this.storage = ['All'];
+    this.storage = [];
     this.friends = [];
   }
 
@@ -21,20 +21,37 @@ class App {
         this.handleUsernameClick(e.target.textContent);
       });
       $('#roomSelect').change(e => {
-        // empty the chats div
-        this.clearMessages();
-        // iterate through all chats in storage
-        this.storage.forEach(message => {
-          // compare room name of chat to selected roomname
-          //console.log(message.roomname);
-          console.log(JSON.stringify(message));
-          console.log($('#roomSelect').find('option:selected').text().trim().replace(/\s\s+/g, ' '));
-          if (message.roomname === $('#roomSelect').find('option:selected').text().trim().replace(/\s\s+/g, ' ')) {
-            // if match, render room
-            this.renderMessage(message);
-          }
-        });
-        console.log('Selected a room!', $('#roomSelect').find('option:selected').text().trim().replace(/\s\s+/g, ' '));
+        var selected = $('#roomSelect').find('option:selected').text().trim().replace(/\s\s+/g, ' ');
+        if (selected === 'Add room') {
+          var add = prompt('Enter room name');
+          // if (add.length < 1) {
+          //   add = prompt('Enter room name');
+          // }
+          this.rooms.push(add);
+          $('.room').detach();
+          this.rooms.sort();
+          this.renderAllRooms();
+          // select the new room!
+          $("#roomSelect").val(add);
+          console.log('rendered rooms');
+
+
+        } else {
+          // empty the chats div
+          this.clearMessages();
+          // iterate through all chats in storage
+          this.storage.forEach(message => {
+            // compare room name of chat to selected roomname
+            if (message.roomname === $('#roomSelect').find('option:selected').text().trim().replace(/\s\s+/g, ' ')) {
+              // if match, render room
+              this.renderMessage(message);
+            }
+          });
+          console.log('Selected a room!', $('#roomSelect').find('option:selected').text().trim().replace(/\s\s+/g, ' '));
+
+        }
+
+
       });
 
     });
@@ -60,27 +77,30 @@ class App {
       url: this.server,
       type: 'GET',
       data: {
-        // where: {
-        //   'username': {
-        //     '$ne': undefined
-        //   }
-        // },
+        where: {
+          // 'username': 'fredx'
+          'username': {
+            '$ne': 'undefined',
+            '$exists': true
+          },
+        },       
         order: '-createdAt',
         limit: 1000
       },
       success: (data) => {
+        console.log('Fetched!');
         this.storage = data.results;
-
+        this.clearMessages();
         this.storage.forEach(message => this.renderMessage(message));
 
         this.storage.forEach(message => {
-          if (this.rooms.indexOf(message.roomname) === -1) {
+          if (this.rooms.indexOf(message.roomname) === -1 && 
+            message.roomname !== 'lobby' && message.roomname !== 'Add room') {
             this.rooms.push(message.roomname);        
           }
           this.rooms.sort();
         });
         this.renderAllRooms();
-        // console.log('Success: ', JSON.stringify(data));
       },
       failure: (data) => {
         console.error(data);
@@ -101,9 +121,12 @@ class App {
   renderMessage(message) {
     var name = DOMPurify.sanitize(message.username);
     var text = DOMPurify.sanitize(message.text);
+    var room = DOMPurify.sanitize(message.roomname);
     var date = message.createdAt;
-    var $message = $(`<p><span class="username">${name}:</span><br>
-                      ${text} <br> <span class="date">${date}</span></p>`);
+    var $message = $(`<span class="username">${name}:</span><br>
+                      <p>${text}</p>
+                      <span>in room: ${room}</span><br>
+                      <span class="date">${date}</span></p>`);
     $('#chats').append($message);
   }
 
@@ -117,11 +140,11 @@ class App {
   }
 
   renderRoom(roomName) {
-    var $room = $(`<option value=${DOMPurify.sanitize(roomName)}>
+    var $room = $(`<option class="room" value=${DOMPurify.sanitize(roomName)}>
                       ${DOMPurify.sanitize(roomName)}
                   </option>`);
     //var $room = $('<option value="lobby">lobby</option>');
-    $('#roomSelect').prepend($room);
+    $('#roomSelect').append($room);
   }
 
   renderAllRooms() {
@@ -137,3 +160,5 @@ class App {
 
 var app = new App();
 app.init();
+//setInterval(function() {  app.fetch(); }, 30000);
+
