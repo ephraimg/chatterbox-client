@@ -18,5 +18,8 @@
   "homepage": "https://github.com/ephraimg/hrsf85-chatterbox-client#readme",
   "devDependencies": {
     "dompurify": "^1.0.2"
+  },
+  "dependencies": {
+    "moment": "^2.19.1"
   }
 }

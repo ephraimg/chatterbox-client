@@ -9,6 +9,10 @@
     <script src="bower_components/jquery/dist/jquery.js"></script>
     <script src="bower_components/underscore/underscore.js"></script>
     <script type="text/javascript" src="../node_modules/dompurify/dist/purify.js"></script>
+    <script src="../node_modules/moment/moment.js"></script>
+    <script>
+        moment().format();
+    </script>
     <script>
       // YOU DO NOT NEED TO EDIT THIS CODE
       if (!/(&|\?)username=/.test(window.location.search)) {
@@ -34,8 +38,9 @@
         <option class="default" selected="selected">lobby</option>
         <option class="default">Add room</option> 
       </select>
+      <br>
       <form id="send">
-        <input type="text" id="message"><br>
+        <textarea rows='10' id="message"></textarea><br>
         <input class="submit" type="submit" value="Submit message">
 <!--         Room: <input type="text" id="room"><br> -->
       </form>

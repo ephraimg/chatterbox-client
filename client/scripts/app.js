@@ -16,6 +16,7 @@ class App {
         e.stopPropagation();
         e.preventDefault();
         (this.handleSubmit.bind(this))();
+        $('#message').val('');
       });
 
       $(document).on('click', '.username', e => {
@@ -91,6 +92,7 @@ class App {
           }
           this.rooms.sort();
         });
+        $('.room').detach();
         this.renderAllRooms();
       },
       failure: (data) => {
@@ -111,15 +113,19 @@ class App {
 
   renderMessage(message) {
     var name = DOMPurify.sanitize(message.username);
+    // if (message.username !== undefined && message.username.includes('<')) { name = '[[HTML BLOCKED]]'; }
     var text = DOMPurify.sanitize(message.text);
+    // if (message.text !== undefined && message.text.includes('<')) { text = '[[HTML BLOCKED]]'; }
     var room = DOMPurify.sanitize(message.roomname);
-    var date = message.createdAt;
+    // if (message.room !== undefined && message.room.includes('<')) { room = '[[HTML BLOCKED]]'; }
+
+    var date = moment().format('dddd, MMMM Do YYYY, h:mm:ss a');
     var status = this.friends.indexOf(message.username) > -1 ? ' friend' : '';
     var $message = $(`<div class="chat">
                       <span class="username${status}">${name}</span><br>
-                      <p>${text}</p>
-                      <span>in room: ${room}</span><br>
-                      <span class="date">${date}</span></p>
+                      <p class="text">${text}</p>
+                      <span class="room">Posted in: ${room}</span><br>
+                      <span class="date">${date}</span>
                       </div>`);
     $('#chats').append($message);
     // if (this.friends.indexOf(name) !== -1) {
@@ -175,5 +181,5 @@ class App {
 
 var app = new App();
 app.init();
-//setInterval(function() {  app.fetch(); }, 3000);
+//setInterval(function() {  app.fetch(); }, 10000);
 
